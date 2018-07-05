@@ -1,0 +1,50 @@
+(package-initialize)
+
+(add-to-list 'package-archives
+	     '("melpa" . "https://melpa.org/packages/"))
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages (quote (helm alchemist neotree))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+
+(global-set-key (kbd "C-q")   'neotree-toggle)
+
+(defun reload-dotemacs ()
+  (interactive)
+  (load-file "~/.emacs"))
+
+(global-set-key (kbd "C-c l") 'reload-dotemacs)
+
+
+(add-hook 'prog-mode-hook 'linum-mode)
+
+(require 'elixir-mode)
+(require 'alchemist)
+
+(add-hook 'after-init-hook 'global-company-mode)
+
+(global-set-key (kbd "C-x <down>") 'windmove-down)
+(global-set-key (kbd "C-x <up>") 'windmove-up)
+(global-set-key (kbd "C-x <left>") 'windmove-left)
+(global-set-key (kbd "C-x <right>") 'windmove-right)
+(global-set-key (kbd "C-c n") 'next-buffer)
+(global-set-key (kbd "C-c p") 'previous-buffer)
+
+(global-undo-tree-mode 1)
+ (global-set-key (kbd "C-z") 'undo)
+ (defalias 'redo 'undo-tree-redo)
+ (global-set-key (kbd "C-S-z") 'redo)
+
+(require 'helm-config)
+(helm-mode 1)
+(global-set-key (kbd "C-x C-f") 'helm-find-files)
+(global-set-key (kbd "M-x") 'helm-M-x)
+(global-set-key (kbd "C-x C-b") 'helm-mini)
