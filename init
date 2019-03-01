@@ -1,15 +1,20 @@
 (package-initialize)
 
 (add-to-list 'package-archives
-	     '("melpa" . "https://melpa.org/packages/"))
+                 '("melpa" . "https://melpa.org/packages/"))
+
+(add-to-list 'package-pinned-packages '(alchemist . "melpa-stable") t)
+
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(org-agenda-files (quote ("~/Documents/Repo/howto/emacs/emacs.org")))
  '(package-selected-packages
    (quote
-    (emmet-mode web-mode vue-mode helm alchemist neotree))))
+    (cider ac-slime slim-mode slime cmake-ide cmake-mode edts company-erlang ivy-erlang-complete helm all-the-icons irony-eldoc company-irony-c-headers flycheck-irony company-irony irony iedit yasnippet-snippets auto-complete-c-headers auto-complete-clang auto-complete emmet-mode flycheck-nimsuggest flycheck-mix flycheck-elixir flymake-css flymake-easy flymake-elixir erlang htmlize vue-mode tide counsel ag undo-tree flycheck-nim nim-mode alchemist neotree))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -17,41 +22,101 @@
  ;; If there is more than one, they won't work right.
  )
 
-(global-set-key (kbd "C-q")   'neotree-toggle)
+(require 'auto-complete)
+(require 'auto-complete-config)
+(ac-config-default)
+
+(require 'yasnippet)
+(yas-global-mode 1)
+
+; initialize auto-complete-c-headers and gets called for c/c++ hooks
+(defun my:ac-c-header-init ()
+  (require 'auto-complete-c-headers)
+  (add-to-list 'ac-sources 'ac-source-c-headers)
+  (add-to-list 'achead:include-directories '"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/usr/include/c++/4.2.1/"))
+(add-hook 'c++-mode-hook 'my:ac-c-header-init)
+(add-hook 'c-mode-hook 'my:ac-c-header-init)
+
+					; iedit
+(define-key global-map (kbd "C-c ;") 'iedit-mode)
+
+(add-hook 'c++-mode-hook 'irony-mode)
+(add-hook 'c-mode-hook 'irony-mode)
+(add-hook 'objc-mode-hook 'irony-mode)
+
+(add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
+
+(eval-after-load 'company
+  '(add-to-list 'company-backends 'company-irony))
+
+(use-package irony
+  :ensure t
+  :defer t
+  :init
+  (add-hook 'c++-mode-hook 'irony-mode)
+  (add-hook 'c-mode-hook 'irony-mode)
+  (add-hook 'objc-mode-hook 'irony-mode)
+  :config
+  ;; replace the `completion-at-point' and `complete-symbol' bindings in
+  ;; irony-mode's buffers by irony-mode's function
+  (defun my-irony-mode-hook ()
+    (define-key irony-mode-map [remap completion-at-point]
+      'irony-completion-at-point-async)
+    (define-key irony-mode-map [remap complete-symbol]
+      'irony-completion-at-point-async))
+  (add-hook 'irony-mode-hook 'my-irony-mode-hook)
+  (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
+  )
+(add-hook 'irony-mode-hook #'irony-eldoc) 
+
+
+;(setq org-html-htmlize-output-type 'css)
+(setq debug-on-error t)
 
 (defun reload-dotemacs ()
   (interactive)
   (load-file "~/.emacs"))
-
 (global-set-key (kbd "C-c l") 'reload-dotemacs)
 
+(global-set-key (kbd "C-x <")   'scroll-up-command)
+(global-set-key (kbd "C-x >")   'scroll-down-command)
 
-(add-hook 'prog-mode-hook 'linum-mode)
+(global-set-key (kbd "C-x ,")   'enlarge-window)
 
-(require 'elixir-mode)
-(require 'alchemist)
+(global-set-key (kbd "C-q")   'neotree-toggle)
+
+(global-set-key (kbd "C-c /")   'counsel-git-grep)
+
+(global-set-key (kbd "C-c )")   'occur)
+
+
+
 
 (add-hook 'after-init-hook 'global-company-mode)
 
-(global-set-key (kbd "C-x <down>") 'windmove-down)
-(global-set-key (kbd "C-x <up>") 'windmove-up)
-(global-set-key (kbd "C-x <left>") 'windmove-left)
-(global-set-key (kbd "C-x <right>") 'windmove-right)
-(global-set-key (kbd "C-c n") 'next-buffer)
-(global-set-key (kbd "C-c p") 'previous-buffer)
+(add-hook 'nimsuggest-mode-hook 'flycheck-mode)
+
+(add-hook 'nim-mode-hook 'nimsuggest-mode)
+
+(put 'upcase-region 'disabled nil)
+
+(add-hook 'prog-mode-hook 'linum-mode)
+
+(setq ido-enable-flex-matching t)
+(setq ido-everywhere t)
+(ido-mode 1)
+
+(global-set-key (kbd "C-x C-b") 'bs-show)
 
 (global-undo-tree-mode 1)
- (global-set-key (kbd "C-z") 'undo)
- (defalias 'redo 'undo-tree-redo)
- (global-set-key (kbd "C-S-z") 'redo)
+(global-set-key (kbd "C-z") 'undo)
+(defalias 'redo 'undo-tree-redo)
+(global-set-key (kbd "C-S-z") 'redo)
 
-(require 'helm-config)
-(helm-mode 1)
-(global-set-key (kbd "C-x C-f") 'helm-find-files)
-(global-set-key (kbd "M-x") 'helm-M-x)
-(global-set-key (kbd "C-x C-b") 'helm-mini)
 
-; shrink and enlarge;
+
+
+
 (defun v-resize (key)
   (interactive "cHit to enlarge\shrink")
   (cond
@@ -81,40 +146,108 @@
 
 
 (global-set-key "\C-c-" 'v-resize)
+;(global-set-key "\C-c_" 'v-resize)
 
 
-;;
+(global-set-key (kbd "C-x <down>") 'windmove-down)
+(global-set-key (kbd "C-x <up>") 'windmove-up)
+(global-set-key (kbd "C-x <left>") 'windmove-left)
+(global-set-key (kbd "C-x <right>") 'windmove-right)
+
+(global-set-key (kbd "C-c n") 'next-buffer)
+(global-set-key (kbd "C-c p") 'previous-buffer)
+
+(global-set-key (kbd "<C-up>") 'backward-paragraph)
+(global-set-key (kbd "<C-down>") 'forward-paragraph)
 
 
-(require 'web-mode)
+
+(define-key input-decode-map "\e[1;5A" [C-up])
+;(define-key input-decode-map "\e[1;5B" [C-down])
+
+; (define-key input-decode-map "\e[1;2A" [S-up])
+
+;(define-key input-decode-map "\e[1;5B" [C-down])
+
+(setq alchemist-goto-elixir-source-dir "/usr/local/share/src/elixir")
+
+(add-hook 'a 'alchemis-mode)
+
+(require 'elixir-mode)
+(require 'alchemist)
+
+; alchemist
+(global-set-key "\C-k" "\C-a\C- \C-n\M-w\C-y")
+
+					; js
+(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+(defun setup-tide-mode ()
+  (interactive)
+  (tide-setup)
+  (flycheck-mode +1)
+  (setq flycheck-check-syntax-automatically '(save mode-enabled))
+  (eldoc-mode +1)
+  (tide-hl-identifier-mode +1)
+  ;; company is an optional dependency. You have to
+  ;; install it separately via package-install
+  (company-mode +1))
+
+(add-hook 'js2-mode-hook #'setup-tide-mode)
 
 
-(add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
 
-(add-to-list 'auto-mode-alist '("\\.vue?\\'" . web-mode))
+					; erlang
 
-
-(eval-after-load 'company-etags '(progn (add-to-list 'company-etags-modes 'web-mode)))
-(setq company-etags-everywhere '(html-mode web-mode))
-
-;; emmet-mode
-
-(add-hook 'web-mode-hook 'emmet-mode)
-
-;;; helm
-
-(setq helm-display-function 'helm-display-buffer-in-own-frame
-        helm-display-buffer-reuse-frame t
-        helm-use-undecorated-frame-option t)
+(setq load-path (cons  "/usr/local/Cellar/erlang/20.3.2/lib/erlang/lib/tools-2.11.2/emacs"
+		       load-path))
+(setq erlang-root-dir "/usr/local/Cellar/erlang/20.3.2/lib/erlang")
+(setq exec-path (cons "/usr/local/Cellar/erlang/20.3.2/lib/erlang/bin" exec-path))
+(require 'erlang-start)
 
 
-;; neotree
-(setq neo-window-width 40)
-(eval-after-load "neotree"
-  '(add-to-list 'window-size-change-functions
-                (lambda (frame)
-                  (let ((neo-window (neo-global--get-window)))
-                    (unless (null neo-window)
-                      (setq neo-window-width (window-width neo-window)))))))
+(add-to-list 'load-path "~/emacs.d/emmet-mode")
+(require 'emmet-mode)
+(global-set-key (kbd "C-c x") 'emmet-expand-line)
+
+
+
+(global-set-key "\C-xc" 'compile)
+
+
+;(setq neo-theme (if (display-graphic-p) 'icons 'arrow))
+(setq neo-window-width 30)
+ (eval-after-load "neotree"
+    '(add-to-list 'window-size-change-functions
+                  (lambda (frame)
+                    (let ((neo-window (neo-global--get-window)))
+                      (unless (null neo-window)
+                        (setq neo-window-width (window-width neo-window)))))))
 
 (setq debug-on-error nil)
+
+
+
+;; helm
+
+(require 'helm-config)
+(helm-mode 1)
+(global-set-key (kbd "C-x C-f") 'helm-find-files)
+(global-set-key (kbd "M-x") 'helm-M-x)
+(global-set-key (kbd "C-x C-b") 'helm-mini)
+
+
+;;erlang
+(add-hook 'after-init-hook 'my-after-init-hook)
+(defun my-after-init-hook ()
+  (require 'edts-start)) 
+
+
+;lisp
+(setq inferior-lisp-program "/usr/local/bin/clisp")
+
+; js 
+(setq js-indent-level 2)
+
+(add-to-list 'exec-path "~/bin")
+
+(global-set-key (kbd "C-h SPC") 'helm-all-mark-rings)
